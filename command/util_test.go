@@ -44,3 +44,8 @@ func (m *MockSlack) SendRichMessage(rm client.RichMessage) (string, string, erro
 func (m *MockSlack) IncomingMessages() <-chan flyte.Event {
 	return make(chan flyte.Event)
 }
+
+func (m *MockSlack) UpdateMessage(channelID, timestamp, text string) error {
+	// TODO
+	return nil
+}

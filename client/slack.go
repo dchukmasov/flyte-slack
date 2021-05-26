@@ -29,10 +29,12 @@ type client interface {
 	NewOutgoingMessage(message, channelId string, options ...slack.RTMsgOption) *slack.OutgoingMessage
 	SendMessage(message *slack.OutgoingMessage)
 	PostMessage(channel string, opts ...slack.MsgOption) (string, string, error)
+	UpdateMessage(channelID, timestamp string, options ...slack.MsgOption) (string, string, string, error)
 }
 
 // our slack implementation makes consistent use of channel id
 type Slack interface {
+	UpdateMessage(channelID, timestamp, text string) error
 	SendMessage(message, channelId, threadTimestamp string)
 	SendRichMessage(rm RichMessage) (respChannel string, respTimestamp string, err error)
 	IncomingMessages() <-chan flyte.Event
@@ -60,6 +62,17 @@ func NewSlack(token string) Slack {
 	logger.Info("initialized slack")
 	go sl.handleMessageEvents()
 	return sl
+}
+
+// Sends slack message to provided channel. Channel does not have to be joined.
+func (sl *slackClient) UpdateMessage(channelID, timestamp, text string) error {
+	_, _, _, err := sl.client.UpdateMessage(channelID, timestamp, slack.MsgOptionText(text, false))
+	if err != nil {
+		logger.Errorf("can't update message=%s in channel=%s: %s", timestamp, channelID, err)
+		return err
+	}
+	logger.Infof("message=%q updated in channel=%s", timestamp, channelID)
+	return nil
 }
 
 // Sends slack message to provided channel. Channel does not have to be joined.
